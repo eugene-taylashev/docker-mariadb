@@ -34,6 +34,6 @@ RUN apk add --no-cache mariadb mariadb-client mariadb-server-utils pwgen && \
 COPY ./entrypoint.sh /
 
 EXPOSE 3306
-VOLUME ["/var/lib/mysql"]
+VOLUME ["/etc/my.cnf.d","/var/lib/mysql"]
 
 ENTRYPOINT ["/entrypoint.sh"]
