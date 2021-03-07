@@ -49,6 +49,40 @@ docker run -d \
   -p 3306:3306  \
   etaylashev/mariadb
 ```
+To run it like a pod:
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mariadb
+  namespace: default
+  labels:
+    app: mariadb
+    purpose: database
+spec:
+  volumes:
+    - name: "maria-conf"
+      hostPath:
+        path: "/data/mariadb/conf"
+    - name: "maria-data"
+      hostPath:
+        path: "/data/mariadb/db"
+  containers:
+    - name: mariadb
+      image: etaylashev/mariadb
+      env: 
+        - name: VERBOSE
+          value: "1"
+      volumeMounts:
+        - name: "maria-conf"
+          mountPath: "/etc/my.cnf.d"
+        - name: "maria-data"
+          mountPath: "/var/lib/mysql"
+      ports:
+        - containerPort: 3306
+          protocol: TCP
+```
+
 To configure TLS, copy certificate and key files to your configuration volume (i.e. ``/data/mariadb/conf``) and add to the file ``server.cnf`` the following:
 ```
 [server]
