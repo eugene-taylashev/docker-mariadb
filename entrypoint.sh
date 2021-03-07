@@ -143,7 +143,7 @@ if [ ! -d $DIR_DB/mysql ]; then
 
     if [ "$MYSQL_ROOT_PASSWORD" = "" ]; then
         MYSQL_ROOT_PASSWORD=`pwgen 16 1`
-        dlog "[ok] - MySQL root Password: $MYSQL_ROOT_PASSWORD"
+        echo "[ok] - MySQL root Password: $MYSQL_ROOT_PASSWORD"
     fi
 
     MYSQL_DATABASE=${MYSQL_DATABASE:-""}
