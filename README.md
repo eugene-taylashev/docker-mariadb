@@ -13,7 +13,7 @@ Brief description:
 * Environment Variables:
   * ``MYSQL_ROOT_PASSWORD``: specify the root password for Mariadb. If not specified for new installation, a random password will be generated and outputed into the log.
   * ``MYSQL_DATABASE``: specify the name of the database
-  * ``MYSQL_USER``: specify the User for the database
+  * ``MYSQL_USER``: specify the User@'%' for the database
   * ``MYSQL_PASSWORD``: specify the User password for the database
   * ``MYSQL_CHARSET``: default charset (utf8) for Mariadb
   * ``MYSQL_COLLATION``: default collation (utf8_general_ci) for Mariadb
