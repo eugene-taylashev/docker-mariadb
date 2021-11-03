@@ -5,7 +5,7 @@ Docker has an [official image](https://hub.docker.com/_/mariadb) maintained by [
 ## Intro
 
 Brief description:
-* The image uses Alpine:latest and MariaDB:latest. As compiled now they are v3.13.2 and v10.5.8.
+* The image uses Alpine:latest and MariaDB:latest. As compiled now they are v3.14.2 and v10.5.12.
 * Non-privileged user id ``mysql`` is used to run the service. The ``mysql`` user ID is adjustable. As compiled: ``uid=1002(mysql) gid=1000(mysql)``
 * Volume structure:
   * ``/etc/my.cnf.d`` for configuration files and X.509 certificates
@@ -28,7 +28,7 @@ docker run -d \
   --name mariadb \
   -e VERBOSE=1 \
   -e MYSQL_ROOT_PASSWORD="Hard2Gue$$Password" \
-  -v /data/mariadb/db:/var/lib/mysql \
+  -v /your_data_dir:/var/lib/mysql \
   -p 3306:3306  \
   etaylashev/mariadb
 ```
@@ -43,10 +43,10 @@ To run the exitsting DB:
 ```
 docker run -d \
   --name mariadb \
-  -e VERBOSE=1 \
-  -v /data/mariadb/conf:/etc/my.cnf.d \
-  -v /data/mariadb/db:/var/lib/mysql \
   -p 3306:3306  \
+  -v /your_config_dir:/etc/my.cnf.d \
+  -v /your_data_dir:/var/lib/mysql \
+  -e VERBOSE=1 \
   etaylashev/mariadb
 ```
 To run it like a pod:
@@ -106,11 +106,13 @@ SSL:   Cipher in use is TLS_AES_256_GCM_SHA384
 Check [documentation](https://mariadb.com/kb/en/secure-connections-overview/) to see more about encryption-in-transit for MariaDB.
 
 ## Backup DBs
-To backup DBs from the running container into a SQL file execute the following:
+Files in the data volume could be backed up normally
+OR to backup DBs from the running container into a SQL file execute the following:
 ```
 export MYSQL_ROOT_PASSWORD="Hard2Gue$$Password"
 docker exec mariadb sh -c "exec mysqldump --all-databases -uroot -p\"$MYSQL_ROOT_PASSWORD\" " >/backup/my_db.sql
 ```
+Or modify and run the sample script `backup.sh`
 
 ## Restore DBs
 To restore DBs from a SQL file to the running container execute the following:
@@ -118,6 +120,7 @@ To restore DBs from a SQL file to the running container execute the following:
 export MYSQL_ROOT_PASSWORD="Hard2Gue$$Password"
 docker exec -i mariadb sh -c "exec mysql -uroot -p\"$MYSQL_ROOT_PASSWORD\" " </backup/my_db.sql
 ```
+Or modify and run the sample script `restore.sh`
 
 ## Upgrade DBs
 Upgrading could be complex. Check [official documentation](https://mariadb.com/kb/en/upgrading-between-major-mariadb-versions/) first. 

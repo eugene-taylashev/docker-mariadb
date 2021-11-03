@@ -6,14 +6,12 @@ ENV UID=1002
 ENV VERBOSE=0 
 
 LABEL maintainer="Eugene Taylashev" \
-    architecture="amd64/x86_64" \
-    mariadb-version="10.5.8" \
-    alpine-version="3.13.2" \
-    build="2021-03-14" \
+    mariadb-version="10.5.12" \
+    alpine-version="3.14.2" \
     org.opencontainers.image.title="alpine-mariadb" \
     org.opencontainers.image.description="Minimal MariaDB image based on Alpine Linux" \
     org.opencontainers.image.authors="Eugene Taylashev" \
-    org.opencontainers.image.version="v10.5.8" \
+    org.opencontainers.image.version="v10.5.12" \
     org.opencontainers.image.url="https://hub.docker.com/r/etaylashev/mariadb" \
     org.opencontainers.image.source="https://github.com/eugene-taylashev/docker-mariadb" \
     org.opencontainers.image.revision=$VCS_REF \
@@ -50,7 +48,7 @@ RUN set -eux; \
     echo "America/Toronto" >  /etc/timezone; \
     apk del tzdata;
 
-COPY ./entrypoint.sh /
+COPY ./entrypoint.sh ./functions.sh /
 
 EXPOSE 3306
 STOPSIGNAL SIGINT
