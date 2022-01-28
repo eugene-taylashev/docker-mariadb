@@ -156,7 +156,7 @@ get_container_details(){
             uname -a
         fi
 	if ! command -v ip &> /dev/null ; then
-            ip address
+            ip addr
         fi
         echo '---------------------------------------------------------------------'
     fi

@@ -6,15 +6,29 @@ set -e
 #  Variable declarations
 #
 #=============================================================================
-SVER="20211103"         #-- When updated
+SVER="20211208"         #-- When updated
 #VERBOSE=1              #-- 1 - be verbose flag, defined outside of the script
 
-USR="mysql"
 MDB_CONF="/etc/my.cnf"
 DIR_CONF="/etc/my.cnf.d"
 DIR_RUN="/run/mysqld"
 DIR_DB="/var/lib/mysql"
 
+#-- Externally defined variables
+#USER=mysql
+#PUID=1000
+#PGID=1000
+#TZ America/Toronto
+#MYSQL_ROOT_PASSWORD
+#MYSQL_DATABASE
+#MYSQL_USER
+#MYSQL_PASSWORD
+#MYSQL_CHARSET
+#MYSQL_COLLATION
+#MYSQL_REPLICATION_USER
+#MYSQL_REPLICATION_PASSWORD
+#MYSQL_REPLICA_FIRST
+#VERBOSE=0
 
 source /functions.sh  #-- Use common funcations
 
@@ -29,8 +43,35 @@ dlog "[ok] - starting entrypoint.sh ver $SVER"
 
 #-- get additional information
 get_container_details
+ip addr show eth0
 dlog "User details (uid,gid):"
-id $USR
+id $USER
+
+#-----------------------------------------------------------------------------
+# Adjust parameters
+#-----------------------------------------------------------------------------
+
+#-- Modify Group ID if needed
+CGID=$(id -g $USER)
+if [ $PGID -ne $CGID ] ; then
+    groupmod --gid $PGID $USER
+	is_good "[ok] - changed gid from $CGID to $PGID for $USER" \
+	"[not ok] - changing gid from $CGID to $PGID for $USER" 
+fi
+
+#-- Modify User and Group ID if needed
+CUID=$(id -u $USER)
+if [ $PUID -ne $CUID ] ; then
+    usermod --gid $PGID --uid $PUID $USER
+	is_good "[ok] - changed uid from $CUID to $PUID for $USER" \
+	"[not ok] - changing gid from $CUID to $PUID for $USER" 
+fi
+
+#-- Modify TimeZone  if needed
+if [ "$TZ" != "$(cat /etc/timezone)" ] ; then
+    cp /usr/share/zoneinfo/$TZ /etc/localtime; \
+    echo "$TZ" >  /etc/timezone;
+fi
 
 #-----------------------------------------------------------------------------
 # Work with MariaDB
@@ -41,7 +82,7 @@ if [ ! -d $DIR_RUN ]; then
 else
     dlog "[ok] - mysqld exists, skipping creation"
 fi
-chown -R $USR:$USR $DIR_RUN
+chown -R $USER:$USER $DIR_RUN
 
 
 #-- Verify if configuration directory exists
@@ -51,7 +92,7 @@ if [ ! -d $DIR_CONF ]; then
 else
     dlog "[ok] - directory $DIR_CONF exists, skipping creation"
 fi
-chown -R $USR:$USR $DIR_CONF
+chown -R $USER:$USER $DIR_CONF
 
 #-- Verify if configuration file exists
 if [ ! -s $MDB_CONF ] ; then
@@ -72,9 +113,9 @@ if [ ! -d $DIR_DB/mysql ]; then
     #-- Copied from: https://github.com/yobasystems/alpine-mariadb/blob/master/alpine-mariadb-amd64/files/run.sh
     dlog "[ok] - MySQL data directory not found, creating initial DBs"
 
-    chown -R $USR:$USR $DIR_DB
+    chown -R $USER:$USER $DIR_DB
 
-    mysql_install_db --user=$USR --ldata=$DIR_DB > /dev/null
+    mysql_install_db --user=$USER --ldata=$DIR_DB > /dev/null
 
     if [ "$MYSQL_ROOT_PASSWORD" = "" ]; then
         MYSQL_ROOT_PASSWORD=`pwgen 16 1`
@@ -116,16 +157,23 @@ EOF
         fi
     fi
 
-    /usr/bin/mysqld --user=$USR --bootstrap --verbose=0 --skip-name-resolve --skip-networking=0 < $tfile
+    /usr/bin/mysqld --user=$USER --bootstrap --verbose=0 --skip-name-resolve --skip-networking=0 < $tfile
     rm -f $tfile
 
     dlog '[ok] - MySQL init process done. Ready for start up.'
 
-    echo "exec /usr/bin/mysqld --user=$USR --console --skip-name-resolve --skip-networking=0" "$@"
+    echo "exec /usr/bin/mysqld --user=$USER --console --skip-name-resolve --skip-networking=0" "$@"
 else
-    chown -R $USR:$USR $DIR_DB
+    chown -R $USER:$USER $DIR_DB
     dlog "[ok] - MySQL directory exists, skipping creation"
 fi
 
-
-exec /usr/bin/mysqld --user=$USR --console --skip-name-resolve --skip-networking=0 $@
+#-- Check if First Cluster node requires
+if [ $MYSQL_REPLICA_FIRST -gt 0 ] ; then
+    WSREP="--wsrep-new-cluster"
+    dlog "[ok] - first node in the cluster"
+else 
+    WSREP=""
+fi
+#--skip-networking=0
+exec /usr/bin/mysqld --user=$USER --console ${WSREP} --skip-name-resolve $@
